@@ -1,4 +1,4 @@
-import { auth, clerkMiddleware, createRouteMatcher, getAuth } from '@clerk/nextjs/server';
+import { auth, clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -17,33 +17,34 @@ const isPublicRoute = createRouteMatcher([
   '/about',
 ]);
 
-// Middleware function to handle route protection and additional processing
+// Middleware function to handle route protection and redirection
 export default clerkMiddleware(async (auth, req: NextRequest) => {
-  // Check if the route is public
+  // Check if the route is public; if so, allow access
   if (isPublicRoute(req)) {
     return NextResponse.next();
   }
 
-  // Handle authentication and redirect to /dashboard after login
   try {
-    const { userId, sessionId, role } = (await auth.protect()) as unknown as AuthResponse;
+    // Authenticate the user
+    const { userId, sessionId, role } = (await auth.protect()) as AuthResponse;
 
-    // If user is authenticated and requests the root route, redirect to /dashboard
-    // console.log("Hello", userId)
-    if (req.nextUrl.pathname === '/' || userId) {
-      const dashboardUrl = new URL('/dashboard', req.url);
+    // If user is authenticated and on the root route, redirect to /dashboard
+    if (req.nextUrl.pathname === '/') {
+      const dashboardUrl = req.nextUrl.clone();
+      dashboardUrl.pathname = '/dashboard';
       return NextResponse.redirect(dashboardUrl);
     }
 
-    // Additional role-based checks
+    // Role-based access control for admin-only routes
     if (/^\/admin(.*)/.test(req.nextUrl.pathname) && role !== 'admin') {
       return new NextResponse('Access denied', { status: 403 });
     }
 
+    // Proceed to the requested page if all checks pass
     return NextResponse.next();
 
   } catch (error) {
-    // Handle authentication errors, like expired sessions
+    // Handle any authentication errors, such as expired sessions
     console.error('Authentication error:', error);
     return new NextResponse('Authentication failed. Please log in.', { status: 401 });
   }
@@ -52,7 +53,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 // Middleware configuration
 export const config = {
   matcher: [
-    // Avoid running middleware on static assets or Next.js internals
+    // Exclude static assets and internal routes from middleware
     '/((?!_next|static|public|favicon.ico|[^?]\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
     // Always include API and TRPC routes
     '/(api|trpc)(.*)',
