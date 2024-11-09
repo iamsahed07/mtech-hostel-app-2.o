@@ -1,3 +1,11 @@
+
+##Inventory -- mess/page.tsx /permission- only admin
+##Report/page.tsx /permission- only admin
+Student permission - dashboard/food-chart/contacts
+
+
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
