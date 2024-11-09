@@ -26,7 +26,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   try {
     // Authenticate the user
-    const { userId, sessionId, role } = (await auth.protect()) as AuthResponse;
+    const { userId, sessionId, role } = (await auth.protect()) as unknown as AuthResponse;
 
     // If user is authenticated and on the root route, redirect to /dashboard
     if (req.nextUrl.pathname === '/') {
